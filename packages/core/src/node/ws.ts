@@ -43,6 +43,9 @@ export async function createWsServer(options: CreateWsServerOptions) {
     console.warn('[Vite DevTools] Client authentication is disabled. Any browser can connect to the devtools and access to your server and filesystem.')
   }
 
+  const protocol = https ? 'wss' : 'ws'
+  console.log(`${MARK_INFO} Websocket server listening on ${c.cyan(`${protocol}://${host}:${port}`)}`)
+
   const preset = createWsRpcPreset({
     port,
     host,

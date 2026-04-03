@@ -12,6 +12,15 @@ export interface DevToolsOptions {
   builtinDevTools?: boolean
 
   /**
+   * Specify the WebSocket server port. Note if the port is already being
+   * used, it will automatically try the next available port so this may not
+   * be the actual port the server ends up listening on.
+   *
+   * @default 7812
+   */
+  websocketServerPort?: number
+
+  /**
    * Options for building static DevTools output alongside `vite build`.
    */
   build?: {
@@ -32,12 +41,13 @@ export interface DevToolsOptions {
 export async function DevTools(options: DevToolsOptions = {}): Promise<Plugin[]> {
   const {
     builtinDevTools = true,
+    websocketServerPort,
     build,
   } = options
 
   const plugins = [
     DevToolsInjection(),
-    DevToolsServer(),
+    DevToolsServer({ port: websocketServerPort }),
   ]
 
   if (build?.withApp) {

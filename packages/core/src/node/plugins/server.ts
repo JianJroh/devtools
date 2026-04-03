@@ -34,7 +34,11 @@ export function renderDockImportsMap(docks: Iterable<DevToolsDockEntry>): string
   ].join('\n')
 }
 
-export function DevToolsServer(): Plugin {
+export interface DevToolsServerOptions {
+  port?: number
+}
+
+export function DevToolsServer(options: DevToolsServerOptions = {}): Plugin {
   let context: DevToolsNodeContext
   return {
     name: 'vite:devtools:server',
@@ -50,6 +54,7 @@ export function DevToolsServer(): Plugin {
       const { middleware } = await createDevToolsMiddleware({
         cwd: viteDevServer.config.root,
         websocket: {
+          port: options.port,
           host,
         },
         context,
