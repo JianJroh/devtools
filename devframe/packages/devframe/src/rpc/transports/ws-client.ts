@@ -77,14 +77,16 @@ export function createWsRpcChannel(options: WsRpcChannelOptions): ChannelOptions
     },
     serialize: (msg: any): string => {
       let method: string | undefined
+      let isErrorResponse = false
       if (msg.t === 'q') {
         method = msg.m
       }
       else {
         method = pendingRequestMethods.get(msg.i)
         pendingRequestMethods.delete(msg.i)
+        isErrorResponse = 'e' in msg
       }
-      const useJson = !!method && definitions.get(method)?.jsonSerializable === true
+      const useJson = !isErrorResponse && !!method && definitions.get(method)?.jsonSerializable === true
       if (useJson)
         return strictJsonStringify(msg, method ?? '')
       return `${STRUCTURED_CLONE_PREFIX}${structuredCloneStringify(msg)}`

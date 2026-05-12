@@ -52,4 +52,29 @@ describe('devtools rpc', () => {
 
     expect(await server.broadcast.$call('hey', 'server')).toEqual(expect.arrayContaining(['hey server, I\'m client 1', 'hey server, I\'m client 2']))
   })
+
+  it('propagates handler errors for jsonSerializable methods', async () => {
+    const PORT = 3334
+    const HOST = '127.0.0.1'
+    const WS_URL = `ws://${HOST}:${PORT}`
+
+    const serverFunctions = {
+      boom: () => {
+        throw new Error('handler-boom')
+      },
+    }
+
+    const definitions = new Map<string, { jsonSerializable?: boolean }>([
+      ['boom', { jsonSerializable: true }],
+    ])
+
+    const server = createRpcServer<Record<string, never>, typeof serverFunctions>(serverFunctions)
+    attachWsRpcTransport(server, { port: PORT, host: HOST, definitions })
+
+    const client = createRpcClient<typeof serverFunctions>({}, {
+      channel: createWsRpcChannel({ url: WS_URL, definitions }),
+    })
+
+    await expect(client.$call('boom')).rejects.toThrow('handler-boom')
+  })
 })
