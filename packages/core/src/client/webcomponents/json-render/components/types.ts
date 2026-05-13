@@ -1,8 +1,9 @@
+import type { UIElement } from '@json-render/core'
 import { ref, watchEffect } from 'vue'
 import { getIconifySvg } from '../../utils/iconify'
 
 export interface RegistryComponentProps {
-  element: { type: string, props: Record<string, any> }
+  element: UIElement<string, Record<string, any>>
   emit: (event: string) => void
   on: (event: string) => { emit: () => void, shouldPreventDefault: boolean, bound: boolean }
   bindings?: Record<string, string>

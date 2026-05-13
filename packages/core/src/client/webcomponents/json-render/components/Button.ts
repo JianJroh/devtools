@@ -1,6 +1,7 @@
 import type { VNode } from 'vue'
 import type { RegistryComponentProps } from './types'
-import { defineComponent, h } from 'vue'
+import { useActions } from '@json-render/vue'
+import { computed, defineComponent, h } from 'vue'
 import { colors, primary, surfaceSubtle } from './tokens'
 import { useIconSvg } from './types'
 
@@ -9,10 +10,23 @@ export const Button = defineComponent({
   props: ['element', 'emit', 'on', 'bindings', 'loading'],
   setup(ctx: RegistryComponentProps) {
     const iconSvg = useIconSvg(() => ctx.element.props.icon)
+    const actions = useActions()
+
+    const isLoading = computed(() => {
+      if (ctx.loading)
+        return true
+      const binding = ctx.element.on?.press
+      if (!binding)
+        return false
+      const list = Array.isArray(binding) ? binding : [binding]
+      return list.some(b => actions.loadingActions.has(b.action))
+    })
 
     return () => {
       const { label, icon, variant = 'secondary', disabled } = ctx.element.props
       const press = ctx.on('press')
+      const loading = isLoading.value
+      const isDisabled = !!disabled || loading
       const styles: Record<string, Record<string, string>> = {
         primary: { backgroundColor: primary, color: '#fff' },
         secondary: { backgroundColor: surfaceSubtle, color: 'inherit' },
@@ -20,7 +34,13 @@ export const Button = defineComponent({
         danger: { backgroundColor: colors.error.bg, color: colors.error.fg },
       }
       const children: (VNode | string)[] = []
-      if (icon && iconSvg.value) {
+      if (loading) {
+        children.push(h('span', {
+          class: 'i-ph-circle-notch animate-spin',
+          style: { display: 'inline-flex', width: '14px', height: '14px' },
+        }))
+      }
+      else if (icon && iconSvg.value) {
         children.push(h('span', {
           style: { display: 'inline-flex', width: '14px', height: '14px' },
           innerHTML: iconSvg.value,
@@ -31,7 +51,7 @@ export const Button = defineComponent({
 
       return h('button', {
         class: `jr-button jr-button-${variant}`,
-        disabled,
+        disabled: isDisabled,
         style: {
           display: 'inline-flex',
           alignItems: 'center',
@@ -41,8 +61,8 @@ export const Button = defineComponent({
           border: 'none',
           fontSize: '12px',
           fontWeight: '500',
-          cursor: disabled ? 'not-allowed' : 'pointer',
-          opacity: disabled ? '0.5' : '1',
+          cursor: loading ? 'wait' : isDisabled ? 'not-allowed' : 'pointer',
+          opacity: isDisabled ? '0.5' : '1',
           whiteSpace: 'nowrap',
           ...styles[variant],
         },
